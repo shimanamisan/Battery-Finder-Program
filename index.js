@@ -8,20 +8,12 @@ const target = $.getElementById("target");
     <p class="mb-0">Step1: Select your brand</p>
     <div class="mb-4">
         <select name="" id="brandArea">
-            <option value="Cakon" selected>Cakon</option>
-            <option value="Go MN">Go MN</option>
-            <option value="VANY">VANY</option>
         </select>
     </div>
 
     <p class="mb-0">Step2: Select your model</p>
     <div class="mb-4">
         <select name="" id="modelArea">
-            <option value="ABC 3000M" selected>ABC 3000M</option>
-            <option value="ABC 5000M">ABC 5000M</option>
-            <option value="ABC 7000M">ABC 7000M</option>
-            <option value="ABC 9000M">ABC 9000M</option>
-            <option value="ABC 9900M">ABC 9900M</option>
         </select>
     </div>
 
@@ -83,8 +75,8 @@ const target = $.getElementById("target");
 
 const accessDomLists = {
     brandArea: $.getElementById("brandArea"),
-    brandArea: $.getElementById("modelArea"),
-    brandArea: $.getElementById("batteryArea"),
+    modelArea: $.getElementById("modelArea"),
+    batteryArea: $.getElementById("batteryArea"),
 }
 
 const battery =
@@ -247,3 +239,34 @@ const camera =
         }]
     ;
 
+class Brand {
+    static initialize() {
+        const target = accessDomLists.brandArea;
+        // brandをキーに重複している要素を取り除く
+        const brandArry = [...new Map(camera.map(item => [item.brand, item])).values()];
+
+        for (let i = 0; i < brandArry.length; i++) {
+            target.innerHTML += `
+            <option value="${brandArry[i].brand}">${brandArry[i].brand}</option>
+            `
+        }
+    }
+}
+
+class BatteryModel {
+    static initialize(brand) {
+        const target = accessDomLists.modelArea;
+
+        for (let i = 0; i < camera.length; i++) {
+            if (camera[i]["brand"] === brand) {
+                target.innerHTML += `
+                    <option value="${camera[i]["model"]}">${camera[i]["model"]}</option>
+                `
+            }
+        }
+    }
+}
+
+
+Brand.initialize();
+BatteryModel.initialize("Cakon")
