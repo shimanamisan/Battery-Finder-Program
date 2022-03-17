@@ -23,50 +23,16 @@ const target = $.getElementById("target");
         <input
             type="number"
             name=""
-            id=""
+            id="accessoryPowerArea"
             min="0"
             max="100"
             value="55"
         />
     </div>
 
-    <div id="batteryArea">
+    <div>
         <p class="mb-0">Step4: Choose your battery</p>
-        <div class="bg-light border d-flex justify-content-between">
-            <div class="p-2 font-weight-bold">IOP-E140</div>
-            <div class="p-2">Estimate 4.0 hours</div>
-        </div>
-        <div class="bg-light border d-flex justify-content-between">
-            <div class="p-2 font-weight-bold">IOP-E140</div>
-            <div class="p-2">Estimate 4.0 hours</div>
-        </div>
-        <div class="bg-light border d-flex justify-content-between">
-            <div class="p-2 font-weight-bold">IOP-E140</div>
-            <div class="p-2">Estimate 4.0 hours</div>
-        </div>
-        <div class="bg-light border d-flex justify-content-between">
-            <div class="p-2 font-weight-bold">IOP-E140</div>
-            <div class="p-2">Estimate 4.0 hours</div>
-        </div>
-        <div class="bg-light border d-flex justify-content-between">
-            <div class="p-2 font-weight-bold">IOP-E140</div>
-            <div class="p-2">Estimate 4.0 hours</div>
-        </div>
-        <div class="bg-light border d-flex justify-content-between">
-            <div class="p-2 font-weight-bold">IOP-E140</div>
-            <div class="p-2">Estimate 4.0 hours</div>
-        </div>
-        <div class="bg-light border d-flex justify-content-between">
-            <div class="p-2 font-weight-bold">IOP-E140</div>
-            <div class="p-2">Estimate 4.0 hours</div>
-        </div>
-        <div class="bg-light border d-flex justify-content-between">
-            <div class="p-2 font-weight-bold">IOP-E140</div>
-            <div class="p-2">Estimate 4.0 hours</div>
-        </div>
-        <div class="bg-light border d-flex justify-content-between">
-            <div class="p-2 font-weight-bold">IOP-E140</div>
-            <div class="p-2">Estimate 4.0 hours</div>
+        <div id="batteryArea">
         </div>
     </div>
 </div>
@@ -78,6 +44,7 @@ const accessDomLists = {
     brandArea: $.getElementById("brandArea"),
     modelArea: $.getElementById("modelArea"),
     batteryArea: $.getElementById("batteryArea"),
+    accessoryPowerArea: $.getElementById("accessoryPowerArea")
 }
 
 class Brand {
@@ -110,13 +77,27 @@ class BatteryModel {
                 `
             }
         }
+
+        target.addEventListener('change', (event) => {
+            Calculate.selectModel(event);
+        });
     }
 }
 
 class ChooseBatteryView {
 
     static createBatteryList() {
-        const target = $.accessDomLists.batteryArea;
+        const target = accessDomLists.batteryArea;
+        // batteryNameをキーにアルファベット順に並び替え
+        let sortBattery = battery.sort((a, b) => (a.batteryName < b.batteryName) ? -1 : 1);
+        for (let i = 0; i < battery.length; i++) {
+            target.innerHTML += `
+            <div class="bg-light border d-flex justify-content-between">
+                <div class="p-2 font-weight-bold">${sortBattery[i].batteryName}</div>
+                <div class="p-2">Estimate ${Calculate.calcurateEstimate(sortBattery[i].voltage, sortBattery[i].capacityAh)} hours</div>
+            </div>
+            `
+        }
     }
 }
 
@@ -144,10 +125,12 @@ class Calculate {
             `
         }
 
+
+
     }
 
-    static selectModel() {
-
+    static selectModel(event) {
+        console.log(event.target.value)
     }
 
     static selectInputPowerConsumption() {
@@ -160,7 +143,20 @@ class Calculate {
             console.log(this.calculate_result[i].powerConsumptionWh)
         }
     }
+
+    static calcurateEstimate(voltage, capacityAh) {
+        const selectModel = accessDomLists.modelArea;
+        let accessory_power = parseInt(accessDomLists.accessoryPowerArea.value);
+        let filter_result = camera.filter(item => item.model === selectModel.value);
+        let total_power_consumption = filter_result[0].powerConsumptionWh + accessory_power;
+
+        // 選択されている電池のブランドと、モデルを元に持続可能時間を計算する
+        let sustainability = Math.round((voltage * capacityAh / total_power_consumption) * 100) / 100;
+
+        return sustainability;
+    }
 }
 
 Brand.initialize();
-BatteryModel.initialize("Cakon")
+BatteryModel.initialize("Cakon");
+ChooseBatteryView.createBatteryList();
