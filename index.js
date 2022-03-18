@@ -4,7 +4,7 @@ const target = $.getElementById("target");
 
 // 初期化処理
 (function (target) {
-    target.innerHTML = `
+  target.innerHTML = `
 <div class="container">
     <p class="mb-0">Step1: Select your brand</p>
     <div class="mb-4">
@@ -41,122 +41,137 @@ const target = $.getElementById("target");
 }(target));
 
 const accessDomLists = {
-    brandArea: $.getElementById("brandArea"),
-    modelArea: $.getElementById("modelArea"),
-    batteryArea: $.getElementById("batteryArea"),
-    accessoryPowerArea: $.getElementById("accessoryPowerArea")
+  brandArea: $.getElementById("brandArea"),
+  modelArea: $.getElementById("modelArea"),
+  batteryArea: $.getElementById("batteryArea"),
+  accessoryPowerArea: $.getElementById("accessoryPowerArea")
 }
 
 class Brand {
-    static initialize() {
-        const target = accessDomLists.brandArea;
-        // brandをキーに重複している要素を取り除く
-        const brandArry = [...new Map(camera.map(item => [item.brand, item])).values()];
 
-        for (let i = 0; i < brandArry.length; i++) {
-            target.innerHTML += `
-            <option value="${brandArry[i].brand}">${brandArry[i].brand}</option>
-            `
-        }
+  // select要素（電池の種類）の初期化処理
+  static initialize() {
+    const target = accessDomLists.brandArea;
+    // brandをキーに重複している要素を取り除く
+    const brandArry = [...new Map(camera.map(item => [item.brand, item])).values()];
 
-        target.addEventListener('change', (event) => {
-            Calculate.selectBrand(event);
-            Calculate.allCalcurate(event);
-        });
+    for (let i = 0; i < brandArry.length; i++) {
+      target.innerHTML += `
+        <option value="${brandArry[i].brand}">${brandArry[i].brand}</option>
+        `
     }
+
+    target.addEventListener('change', (event) => {
+      Calculate.selectBrand(event);
+      ChooseBatteryView.createBatteryList();
+    });
+  }
 }
 
 class BatteryModel {
-    static initialize(brand) {
-        const target = accessDomLists.modelArea;
 
-        for (let i = 0; i < camera.length; i++) {
-            if (camera[i]["brand"] === brand) {
-                target.innerHTML += `
-                    <option value="${camera[i]["model"]}">${camera[i]["model"]}</option>
-                `
-            }
-        }
+  // select要素（電池のモデル）の初期化処理
+  static initialize(brand) {
+    const target = accessDomLists.modelArea;
 
-        target.addEventListener('change', (event) => {
-            Calculate.selectModel(event);
-        });
+    for (let i = 0; i < camera.length; i++) {
+      if (camera[i]["brand"] === brand) {
+        target.innerHTML += `
+          <option value="${camera[i]["model"]}">${camera[i]["model"]}</option>
+          `
+      }
     }
+
+    target.addEventListener('change', (event) => {
+      ChooseBatteryView.createBatteryList();
+    });
+  }
+}
+
+class InputAccessory {
+
+  // input要素（アクセサリーの消費電力）の初期化処理
+  static initialize() {
+    accessDomLists.accessoryPowerArea.addEventListener('change', (event) => {
+      ChooseBatteryView.createBatteryList();
+    });
+  }
 }
 
 class ChooseBatteryView {
 
-    static createBatteryList() {
-        const target = accessDomLists.batteryArea;
-        // batteryNameをキーにアルファベット順に並び替え
-        let sortBattery = battery.sort((a, b) => (a.batteryName < b.batteryName) ? -1 : 1);
-        for (let i = 0; i < battery.length; i++) {
-            target.innerHTML += `
-            <div class="bg-light border d-flex justify-content-between">
-                <div class="p-2 font-weight-bold">${sortBattery[i].batteryName}</div>
-                <div class="p-2">Estimate ${Calculate.calcurateEstimate(sortBattery[i].voltage, sortBattery[i].capacityAh)} hours</div>
-            </div>
-            `
-        }
+  // 要件を満たしている電池を表示及び持続時間を計算
+  static createBatteryList() {
+    const target = accessDomLists.batteryArea;
+    target.innerHTML = "";
+    // batteryNameをキーにアルファベット順に並び替え
+    let sortBattery = battery.sort((a, b) => (a.batteryName < b.batteryName) ? -1 : 1);
+
+    for (let i = 0; i < battery.length; i++) {
+      if (Calculate.IsSafetyVoltage(sortBattery[i])) {
+        let estimateHour = Calculate.calcurateEstimate(sortBattery[i].voltage, sortBattery[i].capacityAh);
+        target.innerHTML += `
+          <div class="bg-light border d-flex justify-content-between">
+            <div class="p-2 font-weight-bold">${sortBattery[i].batteryName}</div>
+            <div class="p-2">Estimate ${estimateHour} hours</div>
+          </div>
+          `
+      }
     }
+  }
 }
 
 class Calculate {
 
-    // 計算された結果を格納する配列
-    static calculate_result = [];
+  static selectBrand(event) {
+    // select要素で選択された値を取得する
+    let brand_name = event.target.value;
 
-    static selectBrand(event) {
-        this.calculate_result = [];
+    // ブランド名を元にcameraのデータから一致するものを抽出
+    let new_model_lists = camera.filter((item) => item.brand === brand_name);
 
-        // select要素で選択された値を取得する
-        let brand_name = event.target.value;
-
-        // ブランド名を元にcameraのデータから一致するものを抽出
-        let new_model_lists = camera.filter((item) => item.brand === brand_name);
-
-        this.calculate_result.push(...new_model_lists);
-
-        const target = accessDomLists.modelArea;
-        target.innerHTML = "";
-        for (let i = 0; i < new_model_lists.length; i++) {
-            target.innerHTML += `
+    const target = accessDomLists.modelArea;
+    target.innerHTML = "";
+    for (let i = 0; i < new_model_lists.length; i++) {
+      target.innerHTML += `
             <option value="${new_model_lists[i].model}">${new_model_lists[i].model}</option>
             `
-        }
-
-
-
     }
+  }
 
-    static selectModel(event) {
-        console.log(event.target.value)
-    }
+  static IsSafetyVoltage(batteryData) {
+    const selectModel = accessDomLists.modelArea;
+    // 現在選択されているカメラのモデルより、カメラのデータを取得
+    let filter_result = camera.filter(item => item.model === selectModel.value);
+    // アクセサリーの消費電力の数値入力欄を取得
+    let accessory_power = parseInt(accessDomLists.accessoryPowerArea.value);
+    // アクセサリーの消費電力とカメラの消費電力を合計する
+    let total_power_consumption = filter_result[0].powerConsumptionWh + accessory_power;
+    // 電池の安全性を考慮した消費電力の値（この値を超える消費電力のカメラには対応していない）
+    let safetyVoltage = (batteryData.maxDraw * batteryData.endVoltage).toFixed(1);
 
-    static selectInputPowerConsumption() {
+    return total_power_consumption < parseInt(safetyVoltage);
+  }
 
-    }
+  static calcurateEstimate(voltage, capacityAh) {
+    const selectModel = accessDomLists.modelArea;
+    // アクセサリーの消費電力の数値入力欄を取得
+    let accessory_power = parseInt(accessDomLists.accessoryPowerArea.value);
+    // 現在選択されているカメラのモデルより、カメラのデータを取得
+    let filter_result = camera.filter(item => item.model === selectModel.value);
+    // アクセサリーの消費電力とカメラの消費電力を合計する
+    let total_power_consumption = filter_result[0].powerConsumptionWh + accessory_power;
+    // 選択されている電池のブランドと、モデルを元に持続可能時間を計算する
+    let sustainability = Math.round((voltage * capacityAh / total_power_consumption) * 10) / 10;
 
-    static allCalcurate(event) {
-
-        for (let i = 0; i < this.calculate_result.length; i++) {
-            console.log(this.calculate_result[i].powerConsumptionWh)
-        }
-    }
-
-    static calcurateEstimate(voltage, capacityAh) {
-        const selectModel = accessDomLists.modelArea;
-        let accessory_power = parseInt(accessDomLists.accessoryPowerArea.value);
-        let filter_result = camera.filter(item => item.model === selectModel.value);
-        let total_power_consumption = filter_result[0].powerConsumptionWh + accessory_power;
-
-        // 選択されている電池のブランドと、モデルを元に持続可能時間を計算する
-        let sustainability = Math.round((voltage * capacityAh / total_power_consumption) * 100) / 100;
-
-        return sustainability;
-    }
+    // 固定小数点表記を用いて整形
+    // INFO1: https://stackoverflow.com/questions/27834961/javascript-how-to-convert-number-1-0-to-string-1-0/27835002
+    // INFO2: https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Number/toFixed
+    return sustainability.toFixed(1);
+  }
 }
 
 Brand.initialize();
 BatteryModel.initialize("Cakon");
+InputAccessory.initialize();
 ChooseBatteryView.createBatteryList();
