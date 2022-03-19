@@ -1,4 +1,4 @@
-import { camera, battery } from './datgaModule.js';
+import { camera, battery } from './dataModule.js';
 const $ = document;
 const target = $.getElementById("target");
 
