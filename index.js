@@ -82,7 +82,7 @@ class BatteryModel {
       }
     }
 
-    target.addEventListener('change', (event) => {
+    target.addEventListener('change', () => {
       ChooseBatteryView.createBatteryList();
     });
   }
@@ -92,7 +92,7 @@ class InputAccessory {
 
   // input要素（アクセサリーの消費電力）の初期化処理
   static initialize() {
-    accessDomLists.accessoryPowerArea.addEventListener('change', (event) => {
+    accessDomLists.accessoryPowerArea.addEventListener('change', () => {
       ChooseBatteryView.createBatteryList();
     });
   }
@@ -105,15 +105,15 @@ class ChooseBatteryView {
     const target = accessDomLists.batteryArea;
     target.innerHTML = "";
     // batteryNameをキーにアルファベット順に並び替え
-    let sortBattery = battery.sort((a, b) => (a.batteryName < b.batteryName) ? -1 : 1);
+    let sort_battery = battery.sort((a, b) => (a.batteryName < b.batteryName) ? -1 : 1);
 
     for (let i = 0; i < battery.length; i++) {
-      if (Calculate.IsSafetyVoltage(sortBattery[i])) {
-        let estimateHour = Calculate.calcurateEstimate(sortBattery[i].voltage, sortBattery[i].capacityAh);
+      if (Calculate.IsSafetyVoltage(sort_battery[i])) {
+        let estimate_hour = Calculate.calcurateEstimate(sort_battery[i].voltage, sort_battery[i].capacityAh);
         target.innerHTML += `
           <div class="bg-light border d-flex justify-content-between">
-            <div class="p-2 font-weight-bold">${sortBattery[i].batteryName}</div>
-            <div class="p-2">Estimate ${estimateHour} hours</div>
+            <div class="p-2 font-weight-bold">${sort_battery[i].batteryName}</div>
+            <div class="p-2">Estimate ${estimate_hour} hours</div>
           </div>
           `
       }
@@ -148,9 +148,9 @@ class Calculate {
     // アクセサリーの消費電力とカメラの消費電力を合計する
     let total_power_consumption = filter_result[0].powerConsumptionWh + accessory_power;
     // 電池の安全性を考慮した消費電力の値（この値を超える消費電力のカメラには対応していない）
-    let safetyVoltage = (batteryData.maxDraw * batteryData.endVoltage).toFixed(1);
+    let safety_voltage = (batteryData.maxDraw * batteryData.endVoltage).toFixed(1);
 
-    return total_power_consumption < parseInt(safetyVoltage);
+    return total_power_consumption < parseInt(safety_voltage);
   }
 
   static calcurateEstimate(voltage, capacityAh) {
