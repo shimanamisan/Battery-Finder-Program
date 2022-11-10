@@ -17,6 +17,10 @@ Recursion Project2 -Vending Machine-
 ## DEMO:
 ![demo-movie](https://user-images.githubusercontent.com/49751604/159105368-cffb108d-8180-42ce-97d0-a55eb1fe3621.gif)
 
+# Pages URL
+
+[https://demo-app.hn-pgtech.com/battery-finder-program/](https://demo-app.hn-pgtech.com/battery-finder-program/)
+
 # Person-hour
 
 4時間
