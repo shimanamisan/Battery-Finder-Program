@@ -1,9 +1,18 @@
 import { camera, battery } from './Entity/DataEntity';
 import '@scss/style';
 
+/**
+ * id要素を格納するオブジェクト
+ */
 const config = {};
 
+/**
+ * 画面を描画するクラス
+ */
 class MainView {
+  /**
+   * オブジェクトを格納
+   */
   static camera = camera;
 
   /**
@@ -52,12 +61,14 @@ class MainView {
     this.createBatteryListArea();
 
     config.accessoryPowerArea.addEventListener('change', () => {
-      AppController.calculateBatteryList();
+      AppController.calculatePowerConsumptionView();
     });
 
-    const target = document.getElementById("target");
+    const target = document.getElementById('target');
 
     target.append(container);
+
+    AppController.calculatePowerConsumptionView();
   }
 
   /**
@@ -73,9 +84,10 @@ class MainView {
            `;
     }
 
+    // 値を変更したときに発火するイベント
     config.brandArea.addEventListener('change', (event) => {
       AppController.selectBrand(event);
-      AppController.calculateBatteryList();
+      AppController.calculatePowerConsumptionView();
     });
   }
 
@@ -92,7 +104,7 @@ class MainView {
     }
 
     config.modelArea.addEventListener('change', () => {
-      AppController.calculateBatteryList();
+      AppController.calculatePowerConsumptionView();
     });
   }
 
@@ -108,43 +120,59 @@ class MainView {
   }
 }
 
+/**
+ * イベント発火時の処理や初期化時の処理をまとめたControllerクラス
+ */
 class AppController {
-  
+  /**
+   * オブジェクトを格納
+   */
+  static battery = battery;
+
+  /**
+   * 電池のブランドを選択した際に実行する処理
+   * @param {object} event - イベント
+   */
   static selectBrand(event) {
     // select要素で選択された値を取得する
-    const brand_name = event.target.value;
+    const brandName = event.target.value;
 
     // ブランド名を元にcameraのデータから一致するものを抽出
-    const new_model_lists = camera.filter((item) => item.brand === brand_name);
+    const newModelLists = camera.filter((item) => item.brand === brandName);
 
     config.modelArea.innerHTML = '';
-    for (let i = 0; i < new_model_lists.length; i++) {
+    for (let i = 0; i < newModelLists.length; i++) {
       config.modelArea.innerHTML += `
-            <option value="${new_model_lists[i].model}">${new_model_lists[i].model}</option>
-            `;
+        <option value="${newModelLists[i].model}">${newModelLists[i].model}</option>`;
     }
   }
 
-  static calculateBatteryList() {
+  /**
+   * 消費電力を元にバッテリーの持続時間を見積もった要素を描画する
+   */
+  static calculatePowerConsumptionView() {
     config.batteryArea.innerHTML = '';
     // batteryNameをキーにアルファベット順に並び替え
-    const sort_battery = battery.sort((a, b) => (a.batteryName < b.batteryName ? -1 : 1));
+    const sortBattery = this.battery.sort((a, b) => (a.batteryName < b.batteryName ? -1 : 1));
 
-    for (let i = 0; i < battery.length; i++) {
-      if (Calculate.IsSafetyVoltage(sort_battery[i])) {
-        const estimate_hour = AppController.calcurateEstimate(sort_battery[i].voltage, sort_battery[i].capacityAh);
+    for (let i = 0; i < this.battery.length; i++) {
+      if (AppController.IsSafetyVoltage(sortBattery[i])) {
+        const estimate_hour = AppController.calcurateEstimate(sortBattery[i].voltage, sortBattery[i].capacityAh);
         config.batteryArea.innerHTML += `
           <div class="bg-light border d-flex justify-content-between">
-            <div class="p-2 font-weight-bold">${sort_battery[i].batteryName}</div>
+            <div class="p-2 font-weight-bold">${sortBattery[i].batteryName}</div>
             <div class="p-2">Estimate ${estimate_hour} hours</div>
           </div>
           `;
       }
     }
   }
-}
 
-class Calculate {
+  /**
+   * 許容電力か判定する
+   * @param {*} batteryData - バッテリーデータ
+   * @returns - boolean
+   */
   static IsSafetyVoltage(batteryData) {
     const selectModel = config.modelArea;
     // 現在選択されているカメラのモデルより、カメラのデータを取得
@@ -159,7 +187,13 @@ class Calculate {
     return total_power_consumption < parseInt(safety_voltage);
   }
 
-  static calculateEstimate(voltage, capacityAh) {
+  /**
+   * バッテリーの持続時間を見積もる
+   * @param {*} voltage
+   * @param {*} capacityAh
+   * @returns
+   */
+  static calcurateEstimate(voltage, capacityAh) {
     const selectModel = config.modelArea;
     // アクセサリーの消費電力の数値入力欄を取得
     const accessory_power = parseInt(config.accessoryPowerArea.value);
